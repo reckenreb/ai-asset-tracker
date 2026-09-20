@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1 class="mb-4">
-    <i class="bi bi-speedometer2 me-2"></i>Ü¡bersicht
+    <i class="bi bi-speedometer2 me-2"></i>Übersicht
 </h1>
 
 <!-- Asset erstellen -->
@@ -101,7 +101,7 @@
                         </h5>
                         <p class="card-text text-muted">
                             {% if asset_counts[asset] > 0 %}
-                                {{ asset_counts[asset] }} EintrÃ¤ge
+                                {{ asset_counts[asset] }} Einträge
                             {% else %}
                                 Noch keine Werte
                             {% endif %}
@@ -111,9 +111,9 @@
                                 <i class="bi bi-eye me-1"></i>Ansehen
                             </a>
                             <form method="POST" action="{{ url_for('delete_asset', name=asset) }}" style="display:inline;"
-                                  onsubmit="return confirm('Asset wirklich lÃ¶schen?');">
+                                  onsubmit="return confirm('Asset wirklich löschen?');">
                                 <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    <i class="bi bi-trash me-1"></i>LÃ¶schen
+                                    <i class="bi bi-trash me-1"></i>Löschen
                                 </button>
                             </form>
                         </div>
@@ -151,9 +151,9 @@
                                 <i class="bi bi-graph-up me-1"></i>Anzeigen
                             </a>
                             <form method="POST" action="{{ url_for('delete_portfolio', name=name) }}" style="display:inline;"
-                                  onsubmit="return confirm('Portfolio wirklich lÃ¶schen?');">
+                                  onsubmit="return confirm('Portfolio wirklich löschen?');">
                                 <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    <i class="bi bi-trash me-1"></i>LÃ¶schen
+                                    <i class="bi bi-trash me-1"></i>Löschen
                                 </button>
                             </form>
                         </div>
@@ -182,7 +182,7 @@
                     <option value="{{ asset }}">{{ asset }}</option>
                     {% endfor %}
                 </select>
-                <div class="form-text">Strg/Cmd + Klick fÃ¼r mehrere Assets</div>
+                <div class="form-text">Strg/Cmd + Klick für mehrere Assets</div>
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-warning w-100">
