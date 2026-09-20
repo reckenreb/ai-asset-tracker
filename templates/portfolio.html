@@ -9,7 +9,7 @@
     </h1>
     <div>
         <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>ZurÃ¼ck
+            <i class="bi bi-arrow-left me-2"></i>Zurück
         </a>
     </div>
 </div>
@@ -54,7 +54,7 @@
 <!-- Werte Tabelle -->
 <div class="card">
     <div class="card-header bg-success text-white">
-        <i class="bi bi-table me-2"></i>Summenzeitreihe ({{ series|length }} EintrÃ¤ge)
+        <i class="bi bi-table me-2"></i>Summenzeitreihe ({{ series|length }} Einträge)
     </div>
     <div class="card-body">
         {% if series %}
@@ -85,13 +85,13 @@
 
 {% block extra_js %}
 <script>
-    // Portfolio-Daten fÃ¼r Chart.js
+    // Portfolio-Daten für Chart.js
     const seriesData = {{ series | tojson }};
     
     if (seriesData && seriesData.length > 0) {
         const ctx = document.getElementById('portfolioChart').getContext('2d');
         
-        // Daten fÃ¼r Chart vorbereiten
+        // Daten für Chart vorbereiten
         const labels = seriesData.map(item => item[0]);
         const values = seriesData.map(item => item[1]);
         
@@ -100,7 +100,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Portfolio-Wert (â¡¬)',
+                    label: 'Portfolio-Wert',
                     data: values,
                     borderColor: 'rgb(13, 110, 253)',
                     backgroundColor: 'rgba(13, 110, 253, 0.1)',
