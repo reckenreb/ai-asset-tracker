@@ -17,6 +17,7 @@ venv/
 /data/
 *.csv
 assets/
+asset_data/
 portfolios.csv
 
 # Secrets
