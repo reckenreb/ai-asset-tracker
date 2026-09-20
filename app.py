@@ -39,7 +39,11 @@ if not os.path.exists(PORTFOLIOS_FILE):
         csv.writer(f).writerow(["name", "assets"])
 
 def safe_name(name):
-    return "".join(c for c in name if c.isalnum() or c in ("-", "_", " ")).strip().replace(" ", "_")
+    return "".join(c for c in name if c.isalnum() or c in ("-", "_", " ")).strip().replace(" ", "-")
+
+def display_name(name):
+    """Zeigt Asset-/Dateinamen ohne Unterstriche an (nur fuer die Anzeige, nicht fuer Dateisystem/Routing)."""
+    return name.replace("_", " ")
 
 def asset_path(name):
     return os.path.join(ASSETS_DIR, f"{safe_name(name)}.csv")
@@ -109,12 +113,59 @@ def portfolio_series(asset_names):
         result.append((d, round(total, 2)))
     return result
 
+def asset_latest_and_change(name):
+    """Liefert (letzter_wert, letztes_datum, differenz, differenz_prozent) fuer ein Asset."""
+    rows = read_asset(name)
+    if not rows:
+        return None, None, None, None
+    latest_date, latest_value = rows[-1]
+    if len(rows) >= 2:
+        _, prev_value = rows[-2]
+        diff = round(latest_value - prev_value, 2)
+        pct = round((diff / prev_value) * 100, 2) if prev_value else None
+    else:
+        diff, pct = None, None
+    return latest_value, latest_date, diff, pct
+
+def portfolio_latest_and_change(assets):
+    """Liefert (letzter_wert, letztes_datum, differenz, differenz_prozent) fuer ein Portfolio."""
+    series = portfolio_series(assets)
+    if not series:
+        return None, None, None, None
+    latest_date, latest_value = series[-1]
+    if len(series) >= 2:
+        _, prev_value = series[-2]
+        diff = round(latest_value - prev_value, 2)
+        pct = round((diff / prev_value) * 100, 2) if prev_value else None
+    else:
+        diff, pct = None, None
+    return latest_value, latest_date, diff, pct
+
 @app.route("/")
 def index():
     assets = list_assets()
     portfolios = read_portfolios()
     asset_counts = {a: len(read_asset(a)) for a in assets}
-    return render_template("index.html", assets=assets, asset_counts=asset_counts, portfolios=portfolios)
+
+    asset_overview = {}
+    for a in assets:
+        value, date, diff, pct = asset_latest_and_change(a)
+        asset_overview[a] = {"value": value, "date": date, "diff": diff, "pct": pct}
+
+    portfolio_overview = {}
+    for name, plist in portfolios.items():
+        value, date, diff, pct = portfolio_latest_and_change(plist)
+        portfolio_overview[name] = {"value": value, "date": date, "diff": diff, "pct": pct}
+
+    return render_template(
+        "index.html",
+        assets=assets,
+        asset_counts=asset_counts,
+        portfolios=portfolios,
+        asset_overview=asset_overview,
+        portfolio_overview=portfolio_overview,
+        display_name=display_name,
+    )
 
 @app.route("/asset/create", methods=["POST"])
 def create_asset():
@@ -127,14 +178,14 @@ def create_asset():
         flash("Asset existiert bereits.")
     else:
         write_asset(name, [])
-        flash(f"Asset '{name}' angelegt.")
+        flash(f"Asset '{display_name(safe_name(name))}' angelegt.")
     return redirect(url_for("index"))
 
 @app.route("/asset/<name>")
 def asset_detail(name):
     rows = read_asset(name)
     rows_with_lock = [(d, v, is_locked(d)) for d, v in rows]
-    return render_template("asset.html", name=name, rows=rows_with_lock, lock_days=LOCK_DAYS)
+    return render_template("asset.html", name=name, rows=rows_with_lock, lock_days=LOCK_DAYS, display_name=display_name)
 
 @app.route("/asset/<name>/add", methods=["POST"])
 def asset_add_value(name):
@@ -159,7 +210,7 @@ def asset_add_value(name):
 
 @app.route("/assets/bulk_add", methods=["POST"])
 def bulk_add_values():
-    """Werte für mehrere Assets gleichzeitig eintragen (Startseite)"""
+    """Werte fuer mehrere Assets gleichzeitig eintragen (Startseite)"""
     date = request.form.get("date", "").strip()
 
     try:
@@ -219,7 +270,7 @@ def delete_asset(name):
             changed = True
     if changed:
         write_portfolios(portfolios)
-    flash(f"Asset '{name}' geloescht.")
+    flash(f"Asset '{display_name(name)}' geloescht.")
     return redirect(url_for("index"))
 
 @app.route("/asset/<name>/rename", methods=["POST"])
@@ -246,7 +297,7 @@ def rename_asset(name):
             changed = True
     if changed:
         write_portfolios(portfolios)
-    flash(f"Asset '{name}' umbenannt in '{new_safe}'.")
+    flash(f"Asset '{display_name(name)}' umbenannt in '{display_name(new_safe)}'.")
     return redirect(url_for("asset_detail", name=new_safe))
 
 @app.route("/portfolio/create", methods=["POST"])
@@ -267,7 +318,7 @@ def portfolio_detail(name):
     portfolios = read_portfolios()
     assets = portfolios.get(name, [])
     series = portfolio_series(assets)
-    return render_template("portfolio.html", name=name, assets=assets, series=series)
+    return render_template("portfolio.html", name=name, assets=assets, series=series, display_name=display_name)
 
 @app.route("/portfolio/<name>/delete", methods=["POST"])
 def delete_portfolio(name):

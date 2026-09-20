@@ -37,7 +37,7 @@
             {% for asset in assets %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <span>
-                    <i class="bi bi-wallet2 me-2"></i>{{ asset }}
+                    <i class="bi bi-wallet2 me-2"></i>{{ display_name(asset) }}
                 </span>
                 <a href="{{ url_for('asset_detail', name=asset) }}" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-eye me-1"></i>Anzeigen
@@ -63,7 +63,7 @@
                 <thead>
                     <tr>
                         <th>Datum</th>
-                        <th>Gesamtwert (â¡¬)</th>
+                        <th>Gesamtwert (€)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -85,22 +85,20 @@
 
 {% block extra_js %}
 <script>
-    // Portfolio-Daten für Chart.js
     const seriesData = {{ series | tojson }};
-    
+
     if (seriesData && seriesData.length > 0) {
         const ctx = document.getElementById('portfolioChart').getContext('2d');
-        
-        // Daten für Chart vorbereiten
+
         const labels = seriesData.map(item => item[0]);
         const values = seriesData.map(item => item[1]);
-        
+
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Portfolio-Wert',
+                    label: 'Portfolio-Wert (€)',
                     data: values,
                     borderColor: 'rgb(13, 110, 253)',
                     backgroundColor: 'rgba(13, 110, 253, 0.1)',
@@ -122,9 +120,9 @@
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.parsed.y.toLocaleString('de-DE', { 
-                                    style: 'currency', 
-                                    currency: 'EUR' 
+                                return context.parsed.y.toLocaleString('de-DE', {
+                                    style: 'currency',
+                                    currency: 'EUR'
                                 });
                             }
                         }
@@ -135,10 +133,10 @@
                         beginAtZero: false,
                         ticks: {
                             callback: function(value) {
-                                return value.toLocaleString('de-DE', { 
-                                    style: 'currency', 
+                                return value.toLocaleString('de-DE', {
+                                    style: 'currency',
                                     currency: 'EUR',
-                                    maximumFractionDigits: 0 
+                                    maximumFractionDigits: 0
                                 });
                             }
                         }

@@ -7,6 +7,179 @@
     <i class="bi bi-speedometer2 me-2"></i>Übersicht
 </h1>
 
+<!-- Werte für alle Assets eintragen -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-cash-coin me-2"></i>Werte eintragen ({{ assets|length }} Assets)
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('bulk_add_values') }}">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Datum</label>
+                    <input type="date" class="form-control" name="date" id="bulk_date" required>
+                </div>
+            </div>
+
+            {% if assets %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Letzter Wert</th>
+                            <th>Entwicklung seit letztem Eintrag</th>
+                            <th>Neuer Wert (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for asset in assets %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('asset_detail', name=asset) }}" class="text-decoration-none">
+                                    <i class="bi bi-wallet2 me-2"></i>{{ display_name(asset) }}
+                                </a>
+                            </td>
+                            <td>
+                                {% set ov = asset_overview[asset] %}
+                                {% if ov.value is not none %}
+                                    <strong>{{ "%.2f"|format(ov.value) }} €</strong>
+                                    <div class="text-muted small">{{ ov.date }}</div>
+                                {% else %}
+                                    <span class="text-muted">Keine Werte</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if ov.diff is not none %}
+                                    {% if ov.diff > 0 %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-arrow-up-short"></i>+{{ "%.2f"|format(ov.diff) }} €
+                                            {% if ov.pct is not none %}({{ "%.2f"|format(ov.pct) }} %){% endif %}
+                                        </span>
+                                    {% elif ov.diff < 0 %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-arrow-down-short"></i>{{ "%.2f"|format(ov.diff) }} €
+                                            {% if ov.pct is not none %}({{ "%.2f"|format(ov.pct) }} %){% endif %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-dash"></i>0,00 €
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" class="form-control"
+                                       name="value_{{ asset }}" placeholder="Wert eingeben">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button type="submit" class="btn btn-success mt-3">
+                <i class="bi bi-save me-2"></i>Alle Werte speichern
+            </button>
+            {% else %}
+            <p class="text-muted">Noch keine Assets vorhanden. Erstelle zuerst ein Asset.</p>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Portfolios -->
+{% if portfolios %}
+<div class="card mb-4">
+    <div class="card-header bg-warning">
+        <i class="bi bi-collection me-2"></i>Portfolios
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for name, portfolio_assets in portfolios.items() %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-pie-chart me-2"></i>{{ name }}
+                        </h5>
+                        <p class="card-text text-muted">
+                            {{ portfolio_assets|length }} Assets
+                        </p>
+                        {% set pv = portfolio_overview[name] %}
+                        {% if pv.value is not none %}
+                        <p class="card-text">
+                            <strong>{{ "%.2f"|format(pv.value) }} €</strong>
+                            <span class="text-muted small">({{ pv.date }})</span>
+                            {% if pv.diff is not none %}
+                                {% if pv.diff > 0 %}
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-arrow-up-short"></i>+{{ "%.2f"|format(pv.diff) }} €
+                                    {% if pv.pct is not none %}({{ "%.2f"|format(pv.pct) }} %){% endif %}
+                                </span>
+                                {% elif pv.diff < 0 %}
+                                <span class="badge bg-danger ms-2">
+                                    <i class="bi bi-arrow-down-short"></i>{{ "%.2f"|format(pv.diff) }} €
+                                    {% if pv.pct is not none %}({{ "%.2f"|format(pv.pct) }} %){% endif %}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary ms-2">
+                                    <i class="bi bi-dash"></i>0,00 €
+                                </span>
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                        {% else %}
+                        <p class="text-muted">Noch keine Werte vorhanden.</p>
+                        {% endif %}
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('portfolio_detail', name=name) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-graph-up me-1"></i>Anzeigen
+                            </a>
+                            <form method="POST" action="{{ url_for('delete_portfolio', name=name) }}" style="display:inline;"
+                                  onsubmit="return confirm('Portfolio wirklich löschen?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash me-1"></i>Löschen
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Portfolio erstellen -->
+<div class="card mb-4">
+    <div class="card-header bg-warning">
+        <i class="bi bi-plus-circle me-2"></i>Neues Portfolio
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('create_portfolio') }}" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="name" placeholder="Portfolio-Name" required>
+            </div>
+            <div class="col-md-6">
+                <select class="form-select" name="assets" multiple required>
+                    {% for asset in assets %}
+                    <option value="{{ asset }}">{{ display_name(asset) }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Strg/Cmd + Klick für mehrere Assets</div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-warning w-100">
+                    <i class="bi bi-plus-lg me-2"></i>Erstellen
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Asset erstellen -->
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
@@ -26,64 +199,6 @@
     </div>
 </div>
 
-<!-- Werte für alle Assets eintragen -->
-<div class="card mb-4">
-    <div class="card-header bg-success text-white">
-        <i class="bi bi-cash-coin me-2"></i>Werte eintragen ({{ assets|length }} Assets)
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('bulk_add_values') }}">
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <label class="form-label">Datum</label>
-                    <input type="date" class="form-control" name="date" id="bulk_date" required>
-                </div>
-            </div>
-            
-            {% if assets %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Asset</th>
-                            <th>Aktueller Wert</th>
-                            <th>Neuer Wert (€)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for asset in assets %}
-                        <tr>
-                            <td>
-                                <a href="{{ url_for('asset_detail', name=asset) }}" class="text-decoration-none">
-                                    <i class="bi bi-wallet2 me-2"></i>{{ asset }}
-                                </a>
-                            </td>
-                            <td>
-                                {% if asset_counts[asset] > 0 %}
-                                    <span class="badge bg-secondary">{{ asset_counts[asset] }} Einträge</span>
-                                {% else %}
-                                    <span class="text-muted">Keine Werte</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <input type="number" step="0.01" class="form-control" 
-                                       name="value_{{ asset }}" placeholder="Wert eingeben">
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <button type="submit" class="btn btn-success mt-3">
-                <i class="bi bi-save me-2"></i>Alle Werte speichern
-            </button>
-            {% else %}
-            <p class="text-muted">Noch keine Assets vorhanden. Erstelle zuerst ein Asset.</p>
-            {% endif %}
-        </form>
-    </div>
-</div>
-
 <!-- Assets Liste -->
 <div class="card">
     <div class="card-header bg-info text-white">
@@ -97,7 +212,7 @@
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <i class="bi bi-wallet2 me-2"></i>{{ asset }}
+                            <i class="bi bi-wallet2 me-2"></i>{{ display_name(asset) }}
                         </h5>
                         <p class="card-text text-muted">
                             {% if asset_counts[asset] > 0 %}
@@ -127,76 +242,10 @@
         {% endif %}
     </div>
 </div>
-
-<!-- Portfolios -->
-{% if portfolios %}
-<div class="card mt-4">
-    <div class="card-header bg-warning">
-        <i class="bi bi-collection me-2"></i>Portfolios
-    </div>
-    <div class="card-body">
-        <div class="row g-3">
-            {% for name, portfolio_assets in portfolios.items() %}
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-pie-chart me-2"></i>{{ name }}
-                        </h5>
-                        <p class="card-text text-muted">
-                            {{ portfolio_assets|length }} Assets
-                        </p>
-                        <div class="d-flex gap-2">
-                            <a href="{{ url_for('portfolio_detail', name=name) }}" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-graph-up me-1"></i>Anzeigen
-                            </a>
-                            <form method="POST" action="{{ url_for('delete_portfolio', name=name) }}" style="display:inline;"
-                                  onsubmit="return confirm('Portfolio wirklich löschen?');">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    <i class="bi bi-trash me-1"></i>Löschen
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- Portfolio erstellen -->
-<div class="card mt-4">
-    <div class="card-header bg-warning">
-        <i class="bi bi-plus-circle me-2"></i>Neues Portfolio
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('create_portfolio') }}" class="row g-3">
-            <div class="col-md-4">
-                <input type="text" class="form-control" name="name" placeholder="Portfolio-Name" required>
-            </div>
-            <div class="col-md-6">
-                <select class="form-select" name="assets" multiple required>
-                    {% for asset in assets %}
-                    <option value="{{ asset }}">{{ asset }}</option>
-                    {% endfor %}
-                </select>
-                <div class="form-text">Strg/Cmd + Klick für mehrere Assets</div>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-warning w-100">
-                    <i class="bi bi-plus-lg me-2"></i>Erstellen
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Datum auf heute setzen
     document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         const dateInput = document.getElementById('bulk_date');
