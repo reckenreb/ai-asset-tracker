@@ -1,0 +1,21 @@
+services:
+  asset-tracker:
+    build: .
+    container_name: asset-tracker
+    restart: unless-stopped
+    networks:
+      macvlan_portainer:
+        ipv4_address: 192.168.0.37
+    environment:
+      - APP_USERNAME=admin
+      - APP_PASSWORD=${APP_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - /srv/docker/asset_tracker/asset_data:/data
+
+networks:
+  macvlan_portainer:
+    external: true
+
+volumes:
+  asset_data:

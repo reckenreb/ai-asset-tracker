@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ name }} - Asset Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi bi-wallet2 me-2"></i>{{ name }}
+    </h1>
+    <div>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>ZurÃ¼ck
+        </a>
+    </div>
+</div>
+
+<!-- Neuen Wert eintragen -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-plus-circle me-2"></i>Neuen Wert eintragen
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('asset_add_value', name=name) }}" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Datum</label>
+                <input type="date" class="form-control" name="date" id="entry_date" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Wert (â¡¬)</label>
+                <input type="number" step="0.01" class="form-control" name="value" placeholder="0.00" required>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-save me-2"></i>Speichern
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Asset umbenennen -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <i class="bi bi-pencil me-2"></i>Asset umbenennen
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('rename_asset', name=name) }}" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" class="form-control" name="new_name" value="{{ name }}" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-info w-100">
+                    <i class="bi bi-check-lg me-2"></i>Umbenennen
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Werte Tabelle -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="bi bi-table me-2"></i>Werte ({{ rows|length }} EintrÃ¤ge)
+    </div>
+    <div class="card-body">
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Wert (â¡¬)</th>
+                        <th>Status</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for date, value, locked in rows|reverse %}
+                    <tr>
+                        <td>{{ date }}</td>
+                        <td>{{ "%.2f"|format(value) }}</td>
+                        <td>
+                            {% if locked %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-lock me-1"></i>Gesperrt
+                            </span>
+                            {% else %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-unlock me-1"></i>Bearbeitbar
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('delete_entry', name=name) }}" style="display:inline;"
+                                  onsubmit="return confirm('Eintrag wirklich lÃ¶schen?');">
+                                <input type="hidden" name="date" value="{{ date }}">
+                                {% if locked %}
+                                <button type="button" class="btn btn-outline-danger btn-sm" disabled title="Gesperrt">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% else %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Noch keine Werte eingetragen.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Info zur Sperrfrist -->
+<div class="alert alert-info mt-4">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Hinweis:</strong> EintrÃ¤ge, die Ãlter als {{ lock_days }} Tage sind, kÃ¶nnen nicht mehr bearbeitet oder gelÃ¶scht werden.
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Datum auf heute setzen
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('entry_date');
+        if (dateInput) {
+            dateInput.value = today;
+        }
+    });
+</script>
+{% endblock %}

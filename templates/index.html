@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Asset Tracker - Übersicht{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">
+    <i class="bi bi-speedometer2 me-2"></i>Ü¡bersicht
+</h1>
+
+<!-- Asset erstellen -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <i class="bi bi-plus-circle me-2"></i>Neues Asset
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('create_asset') }}" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" class="form-control" name="name" placeholder="Asset-Name (z.B. Girokonto, Depot)" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-plus-lg me-2"></i>Erstellen
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Werte für alle Assets eintragen -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-cash-coin me-2"></i>Werte eintragen ({{ assets|length }} Assets)
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('bulk_add_values') }}">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Datum</label>
+                    <input type="date" class="form-control" name="date" id="bulk_date" required>
+                </div>
+            </div>
+            
+            {% if assets %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Aktueller Wert</th>
+                            <th>Neuer Wert (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for asset in assets %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('asset_detail', name=asset) }}" class="text-decoration-none">
+                                    <i class="bi bi-wallet2 me-2"></i>{{ asset }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if asset_counts[asset] > 0 %}
+                                    <span class="badge bg-secondary">{{ asset_counts[asset] }} EintrÃ¤ge</span>
+                                {% else %}
+                                    <span class="text-muted">Keine Werte</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" class="form-control" 
+                                       name="value_{{ asset }}" placeholder="Wert eingeben">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button type="submit" class="btn btn-success mt-3">
+                <i class="bi bi-save me-2"></i>Alle Werte speichern
+            </button>
+            {% else %}
+            <p class="text-muted">Noch keine Assets vorhanden. Erstelle zuerst ein Asset.</p>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Assets Liste -->
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <i class="bi bi-list-ul me-2"></i>Deine Assets
+    </div>
+    <div class="card-body">
+        {% if assets %}
+        <div class="row g-3">
+            {% for asset in assets %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-wallet2 me-2"></i>{{ asset }}
+                        </h5>
+                        <p class="card-text text-muted">
+                            {% if asset_counts[asset] > 0 %}
+                                {{ asset_counts[asset] }} EintrÃ¤ge
+                            {% else %}
+                                Noch keine Werte
+                            {% endif %}
+                        </p>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('asset_detail', name=asset) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i>Ansehen
+                            </a>
+                            <form method="POST" action="{{ url_for('delete_asset', name=asset) }}" style="display:inline;"
+                                  onsubmit="return confirm('Asset wirklich lÃ¶schen?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash me-1"></i>LÃ¶schen
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Noch keine Assets vorhanden.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Portfolios -->
+{% if portfolios %}
+<div class="card mt-4">
+    <div class="card-header bg-warning">
+        <i class="bi bi-collection me-2"></i>Portfolios
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for name, portfolio_assets in portfolios.items() %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-pie-chart me-2"></i>{{ name }}
+                        </h5>
+                        <p class="card-text text-muted">
+                            {{ portfolio_assets|length }} Assets
+                        </p>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('portfolio_detail', name=name) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-graph-up me-1"></i>Anzeigen
+                            </a>
+                            <form method="POST" action="{{ url_for('delete_portfolio', name=name) }}" style="display:inline;"
+                                  onsubmit="return confirm('Portfolio wirklich lÃ¶schen?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash me-1"></i>LÃ¶schen
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Portfolio erstellen -->
+<div class="card mt-4">
+    <div class="card-header bg-warning">
+        <i class="bi bi-plus-circle me-2"></i>Neues Portfolio
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('create_portfolio') }}" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="name" placeholder="Portfolio-Name" required>
+            </div>
+            <div class="col-md-6">
+                <select class="form-select" name="assets" multiple required>
+                    {% for asset in assets %}
+                    <option value="{{ asset }}">{{ asset }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Strg/Cmd + Klick fÃ¼r mehrere Assets</div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-warning w-100">
+                    <i class="bi bi-plus-lg me-2"></i>Erstellen
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Datum auf heute setzen
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('bulk_date');
+        if (dateInput) {
+            dateInput.value = today;
+        }
+    });
+</script>
+{% endblock %}
