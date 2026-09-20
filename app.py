@@ -157,44 +157,42 @@ def asset_add_value(name):
     flash("Wert gespeichert.")
     return redirect(url_for("asset_detail", name=name))
 
-@app.route("/asset/<name>/bulk_add", methods=["POST"])
+@app.route("/assets/bulk_add", methods=["POST"])
 def bulk_add_values():
-    """Neuer Endpunkt: Werte für mehrere Assets gleichzeitig eintragen"""
+    """Werte für mehrere Assets gleichzeitig eintragen (Startseite)"""
     date = request.form.get("date", "").strip()
-    
+
     try:
         datetime.strptime(date, "%Y-%m-%d")
     except ValueError:
         flash("Ungueltiges Datum. Format: YYYY-MM-DD")
         return redirect(url_for("index"))
-    
+
     assets = list_assets()
     saved_count = 0
-    
+
     for asset in assets:
         value_key = f"value_{asset}"
         value = request.form.get(value_key, "").strip()
-        
+
         if value:
             try:
                 value_f = float(value.replace(",", "."))
             except ValueError:
                 continue
-            
+
             existing_rows = read_asset(asset)
             existing_dates = {r[0] for r in existing_rows}
-            
-            # Prüfen ob gesperrt
+
             if date in existing_dates and is_locked(date):
                 continue
-            
-            # Wert speichern/aktualisieren
+
             rows = [r for r in existing_rows if r[0] != date]
             rows.append((date, value_f))
             write_asset(asset, rows)
             saved_count += 1
-    
-    flash(f"{saved_count} Werte für {date} gespeichert.")
+
+    flash(f"{saved_count} Werte fuer {date} gespeichert.")
     return redirect(url_for("index"))
 
 @app.route("/asset/<name>/delete_entry", methods=["POST"])
