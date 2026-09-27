@@ -295,6 +295,7 @@ def asset_detail(name):
         "asset.html",
         name=name,
         rows=rows_with_lock,
+        chart_data=rows,
         lock_days=LOCK_DAYS,
         display_name=display_name,
         is_active=read_asset_status(name),

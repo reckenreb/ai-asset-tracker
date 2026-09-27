@@ -94,6 +94,22 @@
     </div>
 </div>
 
+<!-- Wertentwicklung -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <i class="bi bi-graph-up me-2"></i>Wertentwicklung
+    </div>
+    <div class="card-body">
+        {% if chart_data %}
+        <div class="chart-container">
+            <canvas id="assetChart"></canvas>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Noch keine Werte für eine Grafik vorhanden.</p>
+        {% endif %}
+    </div>
+</div>
+
 <!-- Werte Tabelle -->
 <div class="card">
     <div class="card-header bg-primary text-white">
@@ -162,6 +178,74 @@
 
 {% block extra_js %}
 <script>
+    const chartData = {{ chart_data | tojson }};
+
+    if (chartData && chartData.length > 0) {
+        const chartElement = document.getElementById('assetChart');
+        if (chartElement) {
+            new Chart(chartElement.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: chartData.map(item => item[0]),
+                    datasets: [{
+                        label: 'Asset-Wert (€)',
+                        data: chartData.map(item => item[1]),
+                        borderColor: 'rgb(25, 135, 84)',
+                        backgroundColor: 'rgba(25, 135, 84, 0.12)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString('de-DE', {
+                                        style: 'currency',
+                                        currency: 'EUR',
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('de-DE', {
+                                        style: 'currency',
+                                        currency: 'EUR',
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         const dateInput = document.getElementById('entry_date');
