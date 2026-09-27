@@ -287,6 +287,10 @@ def create_asset():
         flash(f"Asset '{display_name(safe_name(name))}' angelegt.")
     return redirect(url_for("index"))
 
+@app.route("/asset/new")
+def new_asset():
+    return render_template("create_asset.html")
+
 @app.route("/asset/<name>")
 def asset_detail(name):
     rows = read_asset(name)
@@ -450,6 +454,14 @@ def create_portfolio():
     write_portfolios(portfolios)
     flash(f"Portfolio '{name}' gespeichert.")
     return redirect(url_for("index"))
+
+@app.route("/portfolio/new")
+def new_portfolio():
+    return render_template(
+        "create_portfolio.html",
+        assets=list_assets(show_inactive=True),
+        display_name=display_name,
+    )
 
 @app.route("/portfolio/<name>")
 def portfolio_detail(name):

@@ -169,52 +169,6 @@
 </div>
 {% endif %}
 
-<!-- Portfolio erstellen -->
-<div class="card mb-4">
-    <div class="card-header bg-warning">
-        <i class="bi bi-plus-circle me-2"></i>Neues Portfolio
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('create_portfolio') }}" class="row g-3">
-            <div class="col-md-4">
-                <input type="text" class="form-control" name="name" placeholder="Portfolio-Name" required>
-            </div>
-            <div class="col-md-6">
-                <select class="form-select" name="assets" multiple required>
-                    {% for asset in assets %}
-                    <option value="{{ asset }}">{{ display_name(asset) }}</option>
-                    {% endfor %}
-                </select>
-                <div class="form-text">Strg/Cmd + Klick für mehrere Assets</div>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-warning w-100">
-                    <i class="bi bi-plus-lg me-2"></i>Erstellen
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Asset erstellen -->
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <i class="bi bi-plus-circle me-2"></i>Neues Asset
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('create_asset') }}" class="row g-3">
-            <div class="col-md-8">
-                <input type="text" class="form-control" name="name" placeholder="Asset-Name (z.B. Girokonto, Depot)" required>
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-plus-lg me-2"></i>Erstellen
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <!-- Assets Liste -->
 <div class="card">
     <div class="card-header bg-info text-white">
