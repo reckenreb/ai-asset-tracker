@@ -252,6 +252,13 @@ def index():
         value, date, diff, pct = asset_latest_and_change(a)
         asset_overview[a] = {"value": value, "date": date, "diff": diff, "pct": pct}
 
+    tag_summaries = {tag: 0.0 for tag in TAG_COLORS}
+    for asset in assets:
+        value = asset_overview[asset]["value"]
+        if value is not None:
+            tag = asset_tags.get(asset, "keine")
+            tag_summaries[tag] = round(tag_summaries.get(tag, 0.0) + value, 2)
+
     portfolio_overview = {}
     for name, plist in portfolios.items():
         value, date, diff, pct = portfolio_latest_and_change(plist)
@@ -266,6 +273,7 @@ def index():
         asset_colors=asset_colors,
         portfolios=portfolios,
         asset_overview=asset_overview,
+        tag_summaries=tag_summaries,
         portfolio_overview=portfolio_overview,
         display_name=display_name,
         show_inactive=show_inactive,
