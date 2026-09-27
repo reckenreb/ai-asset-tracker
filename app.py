@@ -1,4 +1,4 @@
-import os, csv, glob, base64
+import os, csv, glob, base64, json, re
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, render_template, flash, jsonify
 
@@ -31,7 +31,43 @@ def require_auth():
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 ASSETS_DIR = os.path.join(DATA_DIR, "assets")
 PORTFOLIOS_FILE = os.path.join(DATA_DIR, "portfolios.csv")
+TAGS_FILE = os.path.join(os.path.dirname(__file__), "tags.json")
 LOCK_DAYS = 7
+DEFAULT_TAGS = [
+    {"name": "keine", "color": "#e2e8f0"},
+    {"name": "blau", "color": "#2563eb"},
+    {"name": "gruen", "color": "#16a34a"},
+    {"name": "gelb", "color": "#f59e0b"},
+    {"name": "rot", "color": "#dc2626"},
+    {"name": "lila", "color": "#7c3aed"},
+    {"name": "orange", "color": "#f97316"},
+    {"name": "pink", "color": "#ec4899"},
+    {"name": "cyan", "color": "#0891b2"},
+    {"name": "grau", "color": "#64748b"},
+]
+
+
+def load_tag_colors():
+    try:
+        with open(TAGS_FILE, "r", encoding="utf-8") as file:
+            configured_tags = json.load(file)
+        tag_colors = {}
+        for tag in configured_tags:
+            name = str(tag["name"]).strip().lower()
+            color = str(tag["color"]).strip()
+            if name and re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+                tag_colors[name] = color
+        if tag_colors:
+            return tag_colors
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        pass
+    return {tag["name"]: tag["color"] for tag in DEFAULT_TAGS}
+
+
+TAG_COLORS = load_tag_colors()
+
+if "keine" not in TAG_COLORS:
+    TAG_COLORS["keine"] = "#e2e8f0"
 
 os.makedirs(ASSETS_DIR, exist_ok=True)
 if not os.path.exists(PORTFOLIOS_FILE):
@@ -45,11 +81,27 @@ def display_name(name):
     """Zeigt Asset-/Dateinamen ohne Unterstriche an (nur fuer die Anzeige, nicht fuer Dateisystem/Routing)."""
     return name.replace("_", " ")
 
+
+def format_currency(value):
+    if value is None:
+        return "-"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{number:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+app.jinja_env.filters["currency"] = format_currency
+
 def asset_path(name):
     return os.path.join(ASSETS_DIR, f"{safe_name(name)}.csv")
 
 def asset_status_path(name):
     return os.path.join(ASSETS_DIR, f"{safe_name(name)}.status")
+
+def asset_tag_path(name):
+    return os.path.join(ASSETS_DIR, f"{safe_name(name)}.tag")
 
 def read_asset_status(name):
     path = asset_status_path(name)
@@ -66,6 +118,25 @@ def write_asset_status(name, active):
     path = asset_status_path(name)
     with open(path, "w", encoding="utf-8") as f:
         f.write("active\n" if active else "inactive\n")
+
+def read_asset_tag(name):
+    path = asset_tag_path(name)
+    if not os.path.exists(path):
+        return "keine"
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            value = f.read().strip().lower()
+        return value if value in TAG_COLORS else "keine"
+    except Exception:
+        return "keine"
+
+def write_asset_tag(name, tag):
+    normalized = (tag or "keine").strip().lower()
+    if normalized not in TAG_COLORS:
+        normalized = "keine"
+    path = asset_tag_path(name)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"{normalized}\n")
 
 def list_all_assets():
     return sorted(
@@ -173,6 +244,8 @@ def index():
     portfolios = read_portfolios()
     asset_counts = {a: len(read_asset(a)) for a in list_all_assets()}
     asset_status = {a: read_asset_status(a) for a in list_all_assets()}
+    asset_tags = {a: read_asset_tag(a) for a in list_all_assets()}
+    asset_colors = {a: TAG_COLORS.get(asset_tags.get(a, "keine"), TAG_COLORS["keine"]) for a in list_all_assets()}
 
     asset_overview = {}
     for a in assets:
@@ -189,11 +262,14 @@ def index():
         assets=assets,
         asset_counts=asset_counts,
         asset_status=asset_status,
+        asset_tags=asset_tags,
+        asset_colors=asset_colors,
         portfolios=portfolios,
         asset_overview=asset_overview,
         portfolio_overview=portfolio_overview,
         display_name=display_name,
         show_inactive=show_inactive,
+        tag_palette=TAG_COLORS,
     )
 
 @app.route("/asset/create", methods=["POST"])
@@ -222,6 +298,9 @@ def asset_detail(name):
         lock_days=LOCK_DAYS,
         display_name=display_name,
         is_active=read_asset_status(name),
+        asset_tag=read_asset_tag(name),
+        tag_palette=TAG_COLORS,
+        tag_color=TAG_COLORS.get(read_asset_tag(name), TAG_COLORS["keine"]),
     )
 
 @app.route("/asset/<name>/toggle_active", methods=["POST"])
@@ -229,6 +308,13 @@ def toggle_asset_active(name):
     active = not read_asset_status(name)
     write_asset_status(name, active)
     flash(f"Asset '{display_name(name)}' ist jetzt {'aktiv' if active else 'inaktiv'}.")
+    return redirect(url_for("asset_detail", name=name))
+
+@app.route("/asset/<name>/tag", methods=["POST"])
+def set_asset_tag(name):
+    tag = (request.form.get("tag") or "keine").strip().lower()
+    write_asset_tag(name, tag)
+    flash(f"Tag für '{display_name(name)}' gespeichert.")
     return redirect(url_for("asset_detail", name=name))
 
 @app.route("/asset/<name>/add", methods=["POST"])

@@ -70,7 +70,7 @@
                     {% for date, value in series|reverse %}
                     <tr>
                         <td>{{ date }}</td>
-                        <td><strong>{{ "%.2f"|format(value) }}</strong></td>
+                        <td><strong>{{ value|currency }}</strong></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -122,7 +122,9 @@
                             label: function(context) {
                                 return context.parsed.y.toLocaleString('de-DE', {
                                     style: 'currency',
-                                    currency: 'EUR'
+                                    currency: 'EUR',
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
                                 });
                             }
                         }
@@ -136,7 +138,8 @@
                                 return value.toLocaleString('de-DE', {
                                     style: 'currency',
                                     currency: 'EUR',
-                                    maximumFractionDigits: 0
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
                                 });
                             }
                         }

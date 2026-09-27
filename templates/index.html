@@ -24,89 +24,84 @@
     </div>
 </div>
 
-<!-- Werte für alle Assets eintragen -->
-<div class="card mb-4">
+<!-- Schnelleingabe für Monatswerte -->
+<div class="card mb-4 border-success">
     <div class="card-header bg-success text-white">
-        <i class="bi bi-cash-coin me-2"></i>Werte eintragen ({{ assets|length }} Assets)
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span><i class="bi bi-cash-coin me-2"></i>Monatswerte erfassen</span>
+            <span class="badge bg-light text-success">{{ assets|length }} aktiv</span>
+        </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-3 p-md-4">
         <form method="POST" action="{{ url_for('bulk_add_values') }}">
-            <div class="row mb-3">
+            <div class="row g-3 align-items-end mb-3">
                 <div class="col-md-4">
-                    <label class="form-label">Datum</label>
-                    <input type="date" class="form-control" name="date" id="bulk_date" required>
+                    <label class="form-label fw-semibold">Datum</label>
+                    <input type="date" class="form-control form-control-lg" name="date" id="bulk_date" required>
+                </div>
+                <div class="col-md-8 text-md-end">
+                    <button type="submit" class="btn btn-success btn-lg w-100 w-md-auto">
+                        <i class="bi bi-save me-2"></i>Werte speichern
+                    </button>
                 </div>
             </div>
 
             {% if assets %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Asset</th>
-                            <th>Letzter Wert</th>
-                            <th>Entwicklung seit letztem Eintrag</th>
-                            <th>Neuer Wert (€)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for asset in assets %}
-                        {% set asset_active = asset_status.get(asset, True) if asset_status is defined else True %}
-                        <tr>
-                            <td>
-                                <a href="{{ url_for('asset_detail', name=asset) }}" class="text-decoration-none">
-                                    <i class="bi bi-wallet2 me-2"></i>{{ display_name(asset) }}
-                                </a>
-                                {% if not asset_active %}
-                                    <span class="badge bg-secondary ms-2">inaktiv</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% set ov = asset_overview[asset] %}
-                                {% if ov.value is not none %}
-                                    <strong>{{ "%.2f"|format(ov.value) }} €</strong>
-                                    <div class="text-muted small">{{ ov.date }}</div>
-                                {% else %}
-                                    <span class="text-muted">Keine Werte</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if ov.diff is not none %}
-                                    {% if ov.diff > 0 %}
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-arrow-up-short"></i>+{{ "%.2f"|format(ov.diff) }} €
-                                            {% if ov.pct is not none %}({{ "%.2f"|format(ov.pct) }} %){% endif %}
-                                        </span>
-                                    {% elif ov.diff < 0 %}
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-arrow-down-short"></i>{{ "%.2f"|format(ov.diff) }} €
-                                            {% if ov.pct is not none %}({{ "%.2f"|format(ov.pct) }} %){% endif %}
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">
-                                            <i class="bi bi-dash"></i>0,00 €
-                                        </span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <input type="number" step="0.01" class="form-control"
-                                       name="value_{{ asset }}" placeholder="Wert eingeben">
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="mobile-quick-entry">
+                {% for asset in assets %}
+                {% set asset_active = asset_status.get(asset, True) if asset_status is defined else True %}
+                {% set ov = asset_overview[asset] %}
+                {% set asset_tag = asset_tags.get(asset, 'keine') if asset_tags is defined else 'keine' %}
+                {% set asset_color = asset_colors.get(asset, '#e2e8f0') if asset_colors is defined else '#e2e8f0' %}
+                <div class="quick-entry-card" style="border-left: 8px solid {{ asset_color }}; border-top: 3px solid {{ asset_color }}; background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.85) 100%);">
+                    <div class="asset-label">
+                        <span><i class="bi bi-wallet2 me-2"></i>{{ display_name(asset) }}</span>
+                        {% if asset_tag != 'keine' %}
+                            <span class="badge rounded-pill" style="background: {{ asset_color }}; color: white;">{{ asset_tag.title() }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="asset-meta">
+                        {% if ov.value is not none %}
+                            Letzter Stand: {{ ov.value|currency }} € am {{ ov.date }}
+                        {% else %}
+                            Noch kein Wert hinterlegt
+                        {% endif %}
+                    </div>
+                    <input type="number" step="0.01" class="form-control" name="value_{{ asset }}" placeholder="0,00 €" aria-label="Wert für {{ display_name(asset) }}">
+                </div>
+                {% endfor %}
             </div>
-            <button type="submit" class="btn btn-success mt-3">
-                <i class="bi bi-save me-2"></i>Alle Werte speichern
-            </button>
             {% else %}
-            <p class="text-muted">Noch keine Assets vorhanden. Erstelle zuerst ein Asset.</p>
+            <p class="text-muted mb-0">Noch keine aktive Assets vorhanden. Erstelle zuerst ein Asset.</p>
             {% endif %}
         </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="mini-stat h-100">
+            <strong>{{ assets|length }}</strong>
+            <span>Aktive Assets</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="mini-stat h-100">
+            <strong>{{ portfolios|length }}</strong>
+            <span>Portfolios</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="mini-stat h-100">
+            <strong>{{ asset_counts.values()|sum }}</strong>
+            <span>Einträge Gesamt</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="mini-stat h-100">
+            <strong>{{ assets|selectattr('name', 'equalto', '')|list|length }}</strong>
+            <span>Heute</span>
+        </div>
     </div>
 </div>
 
@@ -131,18 +126,18 @@
                         {% set pv = portfolio_overview[name] %}
                         {% if pv.value is not none %}
                         <p class="card-text">
-                            <strong>{{ "%.2f"|format(pv.value) }} €</strong>
+                            <strong>{{ pv.value|currency }} €</strong>
                             <span class="text-muted small">({{ pv.date }})</span>
                             {% if pv.diff is not none %}
                                 {% if pv.diff > 0 %}
                                 <span class="badge bg-success ms-2">
-                                    <i class="bi bi-arrow-up-short"></i>+{{ "%.2f"|format(pv.diff) }} €
-                                    {% if pv.pct is not none %}({{ "%.2f"|format(pv.pct) }} %){% endif %}
+                                    <i class="bi bi-arrow-up-short"></i>+{{ pv.diff|currency }} €
+                                    {% if pv.pct is not none %}({{ pv.pct|currency }} %){% endif %}
                                 </span>
                                 {% elif pv.diff < 0 %}
                                 <span class="badge bg-danger ms-2">
-                                    <i class="bi bi-arrow-down-short"></i>{{ "%.2f"|format(pv.diff) }} €
-                                    {% if pv.pct is not none %}({{ "%.2f"|format(pv.pct) }} %){% endif %}
+                                    <i class="bi bi-arrow-down-short"></i>{{ pv.diff|currency }} €
+                                    {% if pv.pct is not none %}({{ pv.pct|currency }} %){% endif %}
                                 </span>
                                 {% else %}
                                 <span class="badge bg-secondary ms-2">
@@ -230,11 +225,16 @@
         <div class="row g-3">
             {% for asset in assets %}
             {% set asset_active = asset_status.get(asset, True) if asset_status is defined else True %}
+            {% set asset_tag = asset_tags.get(asset, 'keine') if asset_tags is defined else 'keine' %}
+            {% set asset_color = asset_colors.get(asset, '#e2e8f0') if asset_colors is defined else '#e2e8f0' %}
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 {% if not asset_active %}border-secondary{% endif %}">
+                <div class="card h-100 {% if not asset_active %}border-secondary{% endif %}" style="border-left: 8px solid {{ asset_color }};">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="bi bi-wallet2 me-2"></i>{{ display_name(asset) }}
+                            {% if asset_tag != 'keine' %}
+                                <span class="badge rounded-pill" style="background: {{ asset_color }}; color: white;">{{ asset_tag.title() }}</span>
+                            {% endif %}
                             {% if not asset_active %}
                                 <span class="badge bg-secondary">inaktiv</span>
                             {% endif %}

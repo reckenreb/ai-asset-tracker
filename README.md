@@ -10,6 +10,20 @@
 - API-Endpoint fuer Automatisierung: GET /api/portfolio/<name> liefert JSON [[datum, summe], ...] (per Basic-Auth geschuetzt).
 - Das gesamte Webinterface ist per HTTP Basic Auth geschuetzt.
 
+## Tags konfigurieren
+Die Tag-Namen und Farben stehen in `tags.json` im Projektordner. Pro Tag werden nur
+`name` und eine sechsstellige Hexfarbe benoetigt:
+
+```json
+[
+   {"name": "langfristig", "color": "#16a34a"},
+   {"name": "pruefen", "color": "#f59e0b"}
+]
+```
+
+Nach einer Aenderung die App neu starten. Ungueltige Farben werden ignoriert; die
+Standardpalette bleibt als Fallback erhalten.
+
 ## Vor dem Start unbedingt anpassen (docker-compose.yml)
 1. APP_PASSWORD auf ein eigenes, sicheres Passwort setzen (aktuell Platzhalter BITTE_AENDERN).
 2. SECRET_KEY auf einen zufaelligen, langen String setzen, z.B. erzeugen mit:
