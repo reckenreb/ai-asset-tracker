@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Docker
+*.log
+.docker/
+
+# Daten (niemals committen!)
+.data/
+.data
+/data/
+/asset_data/
+*.csv
+assets/
+asset_data/
+portfolios.csv
+
+# Secrets
+.env
+.env.local
+*.env
+secrets/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
