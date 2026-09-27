@@ -1,4 +1,4 @@
-import os, csv, glob, base64, json, re
+import os, csv, glob, base64, json, re, uuid
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, render_template, flash, jsonify
 
@@ -78,7 +78,15 @@ def safe_name(name):
     return "".join(c for c in name if c.isalnum() or c in ("-", "_", " ")).strip().replace(" ", "-")
 
 def display_name(name):
-    """Zeigt Asset-/Dateinamen ohne Unterstriche an (nur fuer die Anzeige, nicht fuer Dateisystem/Routing)."""
+    label_path = asset_label_path(name)
+    if os.path.exists(label_path):
+        try:
+            with open(label_path, "r", encoding="utf-8") as file:
+                label = file.read().strip()
+            if label:
+                return label
+        except OSError:
+            pass
     return name.replace("_", " ")
 
 
@@ -102,6 +110,13 @@ def asset_status_path(name):
 
 def asset_tag_path(name):
     return os.path.join(ASSETS_DIR, f"{safe_name(name)}.tag")
+
+def asset_label_path(name):
+    return os.path.join(ASSETS_DIR, f"{safe_name(name)}.name")
+
+def write_asset_label(name, label):
+    with open(asset_label_path(name), "w", encoding="utf-8") as file:
+        file.write(f"{label.strip()}\n")
 
 def read_asset_status(name):
     path = asset_status_path(name)
@@ -286,13 +301,14 @@ def create_asset():
     if not name:
         flash("Name darf nicht leer sein.")
         return redirect(url_for("index"))
-    path = asset_path(name)
-    if os.path.exists(path):
-        flash("Asset existiert bereits.")
-    else:
-        write_asset(name, [])
-        write_asset_status(name, True)
-        flash(f"Asset '{display_name(safe_name(name))}' angelegt.")
+    base_name = safe_name(name) or "asset"
+    technical_name = base_name
+    while os.path.exists(asset_path(technical_name)):
+        technical_name = f"{base_name}-{uuid.uuid4().hex[:8]}"
+    write_asset(technical_name, [])
+    write_asset_status(technical_name, True)
+    write_asset_label(technical_name, name)
+    flash(f"Asset '{name}' angelegt.")
     return redirect(url_for("index"))
 
 @app.route("/asset/new")
@@ -408,6 +424,12 @@ def delete_asset(name):
     status_path = asset_status_path(name)
     if os.path.exists(status_path):
         os.remove(status_path)
+    tag_path = asset_tag_path(name)
+    if os.path.exists(tag_path):
+        os.remove(tag_path)
+    label_path = asset_label_path(name)
+    if os.path.exists(label_path):
+        os.remove(label_path)
     portfolios = read_portfolios()
     changed = False
     for pname, assets in portfolios.items():
@@ -425,30 +447,13 @@ def rename_asset(name):
     if not new_name:
         flash("Neuer Name darf nicht leer sein.")
         return redirect(url_for("asset_detail", name=name))
-    old_path = asset_path(name)
-    new_path = asset_path(new_name)
-    if not os.path.exists(old_path):
+    if not os.path.exists(asset_path(name)):
         flash("Asset nicht gefunden.")
         return redirect(url_for("index"))
-    new_safe = safe_name(new_name)
-    if os.path.exists(new_path) and new_safe != safe_name(name):
-        flash("Es existiert bereits ein Asset mit diesem Namen.")
-        return redirect(url_for("asset_detail", name=name))
-    os.rename(old_path, new_path)
-    old_status_path = asset_status_path(name)
-    new_status_path = asset_status_path(new_name)
-    if os.path.exists(old_status_path):
-        os.rename(old_status_path, new_status_path)
-    portfolios = read_portfolios()
-    changed = False
-    for pname, assets in portfolios.items():
-        if name in assets:
-            assets[assets.index(name)] = new_safe
-            changed = True
-    if changed:
-        write_portfolios(portfolios)
-    flash(f"Asset '{display_name(name)}' umbenannt in '{display_name(new_safe)}'.")
-    return redirect(url_for("asset_detail", name=new_safe))
+    old_label = display_name(name)
+    write_asset_label(name, new_name)
+    flash(f"Asset '{old_label}' umbenannt in '{new_name}'.")
+    return redirect(url_for("asset_detail", name=name))
 
 @app.route("/portfolio/create", methods=["POST"])
 def create_portfolio():
