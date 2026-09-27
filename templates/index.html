@@ -181,6 +181,7 @@
             {% set asset_active = asset_status.get(asset, True) if asset_status is defined else True %}
             {% set asset_tag = asset_tags.get(asset, 'keine') if asset_tags is defined else 'keine' %}
             {% set asset_color = asset_colors.get(asset, '#e2e8f0') if asset_colors is defined else '#e2e8f0' %}
+            {% set ov = asset_overview.get(asset, {}) %}
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 {% if not asset_active %}border-secondary{% endif %}" style="border-left: 8px solid {{ asset_color }};">
                     <div class="card-body">
@@ -200,6 +201,13 @@
                                 Noch keine Werte
                             {% endif %}
                         </p>
+                        {% if ov.value is not none %}
+                        <p class="card-text mb-3">
+                            <span class="text-muted small">Aktueller Wert</span><br>
+                            <strong class="fs-5">{{ ov.value|currency }} €</strong>
+                            <span class="text-muted small">({{ ov.date }})</span>
+                        </p>
+                        {% endif %}
                         <div class="d-flex gap-2 flex-wrap">
                             <a href="{{ url_for('asset_detail', name=asset) }}" class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-eye me-1"></i>Ansehen
