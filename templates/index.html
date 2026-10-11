@@ -24,11 +24,11 @@
     </div>
 </div>
 
-<!-- Schnelleingabe für Monatswerte -->
+<!-- Schnelleingabe für Werte -->
 <div class="card mb-4 border-success">
     <div class="card-header bg-success text-white">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <span><i class="bi bi-cash-coin me-2"></i>Monatswerte erfassen</span>
+            <span><i class="bi bi-cash-coin me-2"></i>Werte erfassen</span>
             <span class="badge bg-light text-success">{{ assets|length }} aktiv</span>
         </div>
     </div>
@@ -65,7 +65,7 @@
                     <div class="asset-name">{{ display_name(asset) }}</div>
                     <div class="asset-meta">
                         {% if ov.value is not none %}
-                            Letzter Stand: {{ ov.value|currency }} € am {{ ov.date }}
+                            Letzter Stand: <strong>{{ ov.value|currency }} €</strong> am {{ ov.date }}
                         {% else %}
                             Noch kein Wert hinterlegt
                         {% endif %}
