@@ -25,10 +25,18 @@
                 <label class="form-label">Assets</label>
                 <select class="form-select" name="assets" multiple required>
                     {% for asset in assets %}
-                    <option value="{{ asset }}">{{ display_name(asset) }}</option>
+                    {% set tag = asset_tags.get(asset, 'keine') %}
+                    {% set active = asset_status.get(asset, True) %}
+                    {% set tag_color = asset_tag_colors.get(asset, '#000000') %}
+                    {% if tag != 'keine' %}
+                    <option value="{{ asset }}" style="{% if not active %}color: #6c757d; background-color: #f8f9fa;{% else %}color: #ffffff; background-color: {{ tag_color }};{% endif %}">{{ display_name(asset) }} ({{ tag.title() }}){% if not active %} - inaktiv{% endif %}</option>
+                    {% else %}
+                    <option value="{{ asset }}" style="{% if not active %}color: #6c757d; background-color: #f8f9fa;{% else %}color: #000000; background-color: #ffffff;{% endif %}">{{ display_name(asset) }}{% if not active %} - inaktiv{% endif %}</option>
+                    {% endif %}
                     {% endfor %}
                 </select>
                 <div class="form-text">Strg/Cmd + Klick für mehrere Assets</div>
+                <div class="form-text text-muted">Inaktive Assets sind ausgegraut, aber trotzdem auswählbar.</div>
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-warning w-100">

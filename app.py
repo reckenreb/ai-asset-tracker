@@ -501,9 +501,13 @@ def create_portfolio():
 
 @app.route("/portfolio/new")
 def new_portfolio():
+    assets = list_assets(show_inactive=True)
     return render_template(
         "create_portfolio.html",
-        assets=list_assets(show_inactive=True),
+        assets=assets,
+        asset_tags={asset: read_asset_tag(asset) for asset in assets},
+        asset_status={asset: read_asset_status(asset) for asset in assets},
+        asset_tag_colors={asset: TAG_COLORS.get(read_asset_tag(asset), TAG_COLORS["keine"]) for asset in assets},
         display_name=display_name,
     )
 
