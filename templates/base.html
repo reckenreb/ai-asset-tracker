@@ -103,6 +103,30 @@
             font-weight: 600;
             text-align: right;
         }
+        .quick-entry-card input[type="number"] {
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+        .quick-entry-card input[type="number"]::-webkit-outer-spin-button,
+        .quick-entry-card input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .currency-field-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .currency-field-wrap input {
+            padding-right: 2.2rem;
+        }
+        .currency-field-wrap .currency-suffix {
+            position: absolute;
+            right: 0.8rem;
+            color: #64748b;
+            font-weight: 700;
+            pointer-events: none;
+        }
         .mini-stat {
             background: #eff6ff;
             border-radius: 12px;

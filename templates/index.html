@@ -70,7 +70,10 @@
                             Noch kein Wert hinterlegt
                         {% endif %}
                     </div>
-                    <input type="number" step="0.01" class="form-control" name="value_{{ asset }}" placeholder="0,00 €" aria-label="Wert für {{ display_name(asset) }}">
+                    <div class="currency-field-wrap">
+                        <input type="number" step="0.01" class="form-control" name="value_{{ asset }}" placeholder="0,00" aria-label="Wert für {{ display_name(asset) }}">
+                        <span class="currency-suffix">€</span>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
