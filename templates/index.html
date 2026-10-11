@@ -55,11 +55,14 @@
                 {% set asset_color = asset_colors.get(asset, '#e2e8f0') if asset_colors is defined else '#e2e8f0' %}
                 <div class="quick-entry-card" style="border-left: 8px solid {{ asset_color }}; border-top: 3px solid {{ asset_color }}; background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.85) 100%);">
                     <div class="asset-label">
-                        <span><i class="bi bi-wallet2 me-2"></i>{{ display_name(asset) }}</span>
-                        {% if asset_tag != 'keine' %}
-                            <span class="badge rounded-pill" style="background: {{ asset_color }}; color: white;">{{ asset_tag.title() }}</span>
-                        {% endif %}
+                        <span class="d-flex align-items-center">
+                            <i class="bi bi-wallet2 me-2"></i>
+                            {% if asset_tag != 'keine' %}
+                                <span class="badge rounded-pill" style="background: {{ asset_color }}; color: white;">{{ asset_tag.title() }}</span>
+                            {% endif %}
+                        </span>
                     </div>
+                    <div class="asset-name">{{ display_name(asset) }}</div>
                     <div class="asset-meta">
                         {% if ov.value is not none %}
                             Letzter Stand: {{ ov.value|currency }} € am {{ ov.date }}
