@@ -1,6 +1,6 @@
-import os, csv, glob, base64, json, re, uuid
+import os, csv, glob, json, re, uuid
 from datetime import datetime
-from flask import Flask, request, redirect, url_for, render_template, flash, jsonify
+from flask import Flask, request, redirect, url_for, render_template, flash, jsonify, g
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me")
@@ -8,25 +8,56 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-me")
 APP_USERNAME = os.environ.get("APP_USERNAME", "admin")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "changeme")
 
-def check_auth(auth_header):
-    if not auth_header or not auth_header.startswith("Basic "):
-        return False
-    try:
-        decoded = base64.b64decode(auth_header.split(" ", 1)[1]).decode("utf-8")
-        user, pw = decoded.split(":", 1)
-    except Exception:
-        return False
-    return user == APP_USERNAME and pw == APP_PASSWORD
+COOKIE_NAME = "asset_tracker_auth"
+COOKIE_MAX_AGE = 60 * 60 * 24 * 365 * 10
+
+
+def is_logged_in():
+    return request.cookies.get(COOKIE_NAME) == "1"
+
 
 @app.before_request
 def require_auth():
-    auth_header = request.headers.get("Authorization")
-    if not check_auth(auth_header):
-        return (
-            "Login erforderlich",
-                401,
-            {"WWW-Authenticate": 'Basic realm="Asset Tracker"'},
-        )
+    g.is_authenticated = is_logged_in()
+    if request.endpoint in {"login", "logout", "static"}:
+        return None
+    if not g.is_authenticated:
+        return redirect(url_for("login", next=request.path))
+
+
+@app.context_processor
+def inject_auth_state():
+    return {"is_authenticated": getattr(g, "is_authenticated", False)}
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if password == APP_PASSWORD:
+            next_url = request.form.get("next") or request.args.get("next") or url_for("index")
+            response = redirect(next_url)
+            response.set_cookie(
+                COOKIE_NAME,
+                "1",
+                max_age=COOKIE_MAX_AGE,
+                httponly=True,
+                samesite="Lax",
+                secure=False,
+            )
+            flash("Erfolgreich angemeldet.")
+            return response
+        flash("Falsches Passwort.")
+
+    return render_template("login.html", next=request.args.get("next"))
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    response = redirect(url_for("login"))
+    response.delete_cookie(COOKIE_NAME, path="/")
+    flash("Erfolgreich abgemeldet.")
+    return response
 
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 ASSETS_DIR = os.path.join(DATA_DIR, "assets")
