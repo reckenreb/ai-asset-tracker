@@ -224,10 +224,32 @@
                             {% endif %}
                         </p>
                         {% if ov.value is not none %}
-                        <p class="card-text mb-3">
+                        <p class="card-text mb-2">
                             <span class="text-muted small">Aktueller Wert</span><br>
                             <strong class="fs-5">{{ ov.value|currency }} €</strong>
                             <span class="text-muted small">({{ ov.date }})</span>
+                        </p>
+                        <p class="card-text mb-3">
+                            <span class="text-muted small">Performance seit letztem Eintrag</span><br>
+                            {% if ov.diff is not none %}
+                                {% if ov.diff > 0 %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-arrow-up-short"></i>+{{ ov.diff|currency }} €
+                                    {% if ov.pct is not none %}({{ ov.pct|currency }} %){% endif %}
+                                </span>
+                                {% elif ov.diff < 0 %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-arrow-down-short"></i>{{ ov.diff|currency }} €
+                                    {% if ov.pct is not none %}({{ ov.pct|currency }} %){% endif %}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-dash"></i>0,00 €
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-muted small">Noch kein Vergleich verfügbar</span>
+                            {% endif %}
                         </p>
                         {% endif %}
                         <div class="d-flex gap-2 flex-wrap">
